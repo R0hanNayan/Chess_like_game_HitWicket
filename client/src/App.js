@@ -10,7 +10,8 @@ const App = () => {
     const [playerMove, setPlayerMove] = useState('');
 
     useEffect(() => {
-        const ws = new WebSocket('ws:https://chess-like-game-hitwicket.onrender.com');
+        const ws = new WebSocket('wss://chess-like-game-hitwicket.onrender.com');
+);
         
         ws.onmessage = (event) => {
             const message = JSON.parse(event.data);
