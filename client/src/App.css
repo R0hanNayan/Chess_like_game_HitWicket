@@ -1,0 +1,95 @@
+/* src/App.css */
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  background-color: #121212; /* Dark background */
+  color: #e0e0e0; /* Light text color */
+}
+
+.App {
+  text-align: center;
+  padding: 20px;
+}
+
+h1 {
+  color: #f5a623; /* Orange color for the header */
+  margin-bottom: 20px;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(5, 50px);
+  grid-template-rows: repeat(5, 50px);
+  gap: 5px;
+  justify-content: center;
+  margin: 20px auto;
+}
+
+.cell {
+  width: 50px;
+  height: 50px;
+  background-color: #333; /* Dark cell background */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff; /* Light text color for the cell */
+  border-radius: 5px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.cell.active {
+  background-color: #f5a623; /* Highlight color for the active cell */
+  color: #121212; /* Dark text color for the active cell */
+}
+
+.controls {
+  margin-top: 20px;
+}
+
+p {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 100px);
+  grid-template-rows: repeat(2, 50px);
+  gap: 10px;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.button-grid button {
+  background-color: #444; /* Dark button background */
+  color: #e0e0e0; /* Light text color for buttons */
+  border: none;
+  border-radius: 5px;
+  padding: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+.button-grid button:hover {
+  background-color: #555; /* Slightly lighter background on hover */
+}
+
+.button-grid button:active {
+  transform: scale(0.98); /* Slightly scale down button on click */
+}
+
+/* Specific styles for button spacing */
+.button-grid .vertical-button {
+  grid-row: span 2; /* Span all columns for the vertical buttons */
+}
+
+.button-grid .horizontal-button {
+  grid-row: span 2; /* Span one row for the horizontal buttons */
+}
+
+
+
