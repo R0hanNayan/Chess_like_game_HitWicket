@@ -1,74 +1,70 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import io from 'socket.io-client';
 
-// Connect to the Socket.io server
-const socket = io('https://chess-like-game-hitwicket.onrender.com');
-
-function App() {
-  const [board, setBoard] = useState(Array(25).fill(null));
-  const [playerPosition, setPlayerPosition] = useState(12); // Starting position
-
-  useEffect(() => {
-    // Listen for position updates from the server
-    socket.on('positionUpdate', (newPosition) => {
-      setPlayerPosition(newPosition);
+const App = () => {
+    const [gameState, setGameState] = useState({
+        grid: Array(5).fill(Array(5).fill(null)),
+        turn: 'A',
+        winner: null
     });
+    const [playerMove, setPlayerMove] = useState('');
 
-    // Clean up on component unmount
-    return () => {
-      socket.off('positionUpdate');
+    useEffect(() => {
+        const ws = new WebSocket('ws://localhost:8080');
+        
+        ws.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+            if (message.type === 'state') {
+                setGameState(message.state);
+            } else if (message.type === 'error') {
+                alert(message.message); 
+            }
+        };
+        
+        return () => {
+            ws.close();
+        };
+    }, []);
+
+    const handleSubmitMove = () => {
+        if (playerMove.trim()) {
+            const command = playerMove.trim();
+            const player = gameState.turn;
+            const [character, direction] = command.split(':');
+            const ws = new WebSocket('ws://localhost:8080');
+            ws.onopen = () => {
+                ws.send(JSON.stringify({ type: 'move', player, character, direction }));
+            };
+            setPlayerMove('');
+        }
     };
-  }, []);
 
-  const movePlayer = (direction) => {
-    let newPosition = playerPosition;
-
-    switch (direction) {
-      case 'up':
-        if (playerPosition >= 5) newPosition -= 5;
-        break;
-      case 'down':
-        if (playerPosition < 20) newPosition += 5;
-        break;
-      case 'left':
-        if (playerPosition % 5 !== 0) newPosition -= 1;
-        break;
-      case 'right':
-        if (playerPosition % 5 !== 4) newPosition += 1;
-        break;
-      default:
-        return;
-    }
-
-    setPlayerPosition(newPosition);
-    socket.emit('movePlayer', newPosition); // Send the new position to the server
-  };
-
-  return (
-    <div className="App">
-      <h1>Player Movement</h1>
-      <div className="board">
-        {board.map((cell, index) => (
-          <div
-            key={index}
-            className={`cell ${index === playerPosition ? 'active' : ''}`}
-          >
-            {index === playerPosition ? 'P' : ''}
-          </div>
-        ))}
-      </div>
-      <div className="controls">
-        <p>Move Player:</p>
-        <div className="button-grid">
-            <button className="vertical-button" onClick={() => movePlayer('up')}>Up</button>
-            <button className="vertical-button" onClick={() => movePlayer('down')}>Down</button>
-            <button className="horizontal-button" onClick={() => movePlayer('left')}>Left</button>
-            <button className="horizontal-button" onClick={() => movePlayer('right')}>Right</button>
+    return (
+        <div className='dark-mode'>
+            <h1>Clash Of Grids</h1>
+            <div id="game-board">
+                {gameState.grid.map((row, rowIndex) => (
+                    row.map((cell, colIndex) => (
+                        <div key={`${rowIndex}-${colIndex}`} className={`grid-cell ${cell ? cell.split('-')[0].toLowerCase() : ''}`}>
+                            {cell ? cell.split('-')[1] : ''}
+                        </div>
+                    ))
+                ))}
+            </div>
+            <div id="controls">
+                <input
+                    type="text"
+                    value={playerMove}
+                    onChange={(e) => setPlayerMove(e.target.value)}
+                    placeholder={`Player ${gameState.turn} move (e.g., P1:L)`}
+                />
+                <button onClick={handleSubmitMove}>Submit Move</button>
+            </div>
+            <div id="game-status">
+                {gameState.winner ? `Game Over! Player ${gameState.winner} wins!` : `Current Turn: Player ${gameState.turn}`}
+            </div>
         </div>
-      </div>
-    </div>
-  );
-}
+    );
+};
 
 export default App;

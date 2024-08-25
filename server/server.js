@@ -1,111 +1,176 @@
-// server.js
-const express = require("express");
-const http = require("http");
-const WebSocket = require("ws");
-const cors = require("cors");
+const WebSocket = require('ws');
+const http = require('http');
+const express = require('express');
+const path = require('path'); 
 
 const app = express();
-app.use(cors());
-
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-const clients = [];
-const gameState = {
-  board: Array(5).fill(null).map(() => Array(5).fill(null)),
-  players: { A: {}, B: {} },
-  turn: "A",
-};
+app.use(express.static('Client'));
 
-// Function to initialize the game state
-function initializeGame() {
-  for (let i = 0; i < 5; i++) {
-    gameState.players.A[`P${i + 1}`] = { x: 0, y: i };
-    gameState.players.B[`P${i + 1}`] = { x: 4, y: i };
-    gameState.board[0][i] = `A-P${i + 1}`;
-    gameState.board[4][i] = `B-P${i + 1}`;
-  }
-}
-
-initializeGame();
-
-wss.on("connection", (ws) => {
-  console.log("New client connected");
-  clients.push(ws);
-
-  ws.on("message", (message) => {
-    const { type, data } = JSON.parse(message);
-
-    switch (type) {
-      case "move":
-        handleMove(data);
-        break;
-      default:
-        break;
-    }
-
-    broadcastState();
-  });
-
-  ws.on("close", () => {
-    clients.splice(clients.indexOf(ws), 1);
-    console.log("Client disconnected");
-  });
+app.get('/', (req, res) => {
+    res.sendFile(path.join('Client', 'index.html'));
 });
 
-function handleMove({ player, pawn, direction }) {
-  const { x, y } = gameState.players[player][pawn];
-  const { newX, newY } = getNewPosition(x, y, direction, player);
+let gameState = {
+    grid: [
+        ['A-P1', 'A-P2', 'A-H1', 'A-H2', 'A-P3'],
+        [null, null, null, null, null],
+        [null, null, null, null, null],
+        [null, null, null, null, null],
+        ['B-P1', 'B-P2', 'B-H1', 'B-H2', 'B-P3']
+    ],
+    turn: 'A',
+    winner: null,
+    moves: []
+};
 
-  // Check if move is valid
-  if (
-    newX < 0 ||
-    newX >= 5 ||
-    newY < 0 ||
-    newY >= 5 ||
-    (gameState.board[newX][newY] &&
-      gameState.board[newX][newY].startsWith(player))
-  ) {
-    return;
-  }
 
-  const opponent = player === "A" ? "B" : "A";
-  const opponentPawn = gameState.board[newX][newY];
+const broadcastGameState = () => {
+    const stateMessage = JSON.stringify({ type: 'state', state: gameState });
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(stateMessage);
+        }
+    });
+    console.log('Broadcasted game state:', gameState); 
+};
 
-  if (opponentPawn && opponentPawn.startsWith(opponent)) {
-    // Remove opponent pawn
-    const [opponentPlayer, opponentPawnName] = opponentPawn.split("-");
-    delete gameState.players[opponentPlayer][opponentPawnName];
-  }
+const checkForWinner = () => {
+    const playerAHasCharacters = gameState.grid.flat().some(cell => cell && cell.startsWith('A-'));
+    const playerBHasCharacters = gameState.grid.flat().some(cell => cell && cell.startsWith('B-'));
 
-  gameState.board[x][y] = null;
-  gameState.board[newX][newY] = `${player}-${pawn}`;
-  gameState.players[player][pawn] = { x: newX, y: newY };
+    if (!playerAHasCharacters) {
+        gameState.winner = 'B';
+    } else if (!playerBHasCharacters) {
+        gameState.winner = 'A';
+    }
+};
 
-  gameState.turn = opponent;
-}
+wss.on('connection', (ws) => {
+    console.log('Client connected');
+    ws.send(JSON.stringify({ type: 'state', state: gameState }));
 
-function getNewPosition(x, y, direction, player) {
-  switch (direction) {
-    case "F":
-      return player === "A" ? { newX: x + 1, newY: y } : { newX: x - 1, newY: y };
-    case "B":
-      return player === "A" ? { newX: x - 1, newY: y } : { newX: x + 1, newY: y };
-    case "L":
-      return { newX: x, newY: y - 1 };
-    case "R":
-      return { newX: x, newY: y + 1 };
-    default:
-      return { newX: x, newY: y };
-  }
-}
+    ws.on('message', (message) => {
+        console.log('Received message:', message);
+        const data = JSON.parse(message);
+    
+        if (data.type === 'move') {
+            const { player, character, direction } = data;
+    
+            if (gameState.turn !== player) {
+                ws.send(JSON.stringify({ type: 'error', message: 'Not your turn!' }));
+                console.log('Error: Not your turn!');
+                return;
+            }
+    
+            const [row, col] = findCharacterPosition(`${player}-${character}`);
+            if (row === null || col === null) {
+                ws.send(JSON.stringify({ type: 'error', message: 'Character not found!' }));
+                console.log('Error: Character not found!');
+                return;
+            }
+    
 
-function broadcastState() {
-  clients.forEach((client) => {
-    client.send(JSON.stringify({ type: "update", data: gameState }));
-  });
-}
+            let newRow = row;
+            let newCol = col;
+    
+            switch (character) {
+                case 'P1':
+                case 'P2':
+                case 'P3':
+                    switch (direction) {
+                        case 'L': newCol = Math.max(0, col - 1); break;
+                        case 'R': newCol = Math.min(4, col + 1); break;
+                        case 'F': newRow = gameState.turn === 'A' ? Math.min(4, row + 1) : Math.max(0, row - 1); break;
+                        case 'B': newRow = gameState.turn === 'A' ? Math.max(0, row - 1) : Math.min(4, row + 1); break;
+                    }
+                    break;
+                case 'H1':
+                    switch (direction) {
+                        case 'L': newRow = row; newCol = Math.max(0, col - 2); break;
+                        case 'R': newRow = row; newCol = Math.min(4, col + 2); break;
+                        case 'F': newRow = gameState.turn === 'A' ? Math.min(4, row + 2) : Math.max(0, row - 2); newCol = col; break;
+                        case 'B': newRow = gameState.turn === 'A' ? Math.max(0, row - 2) : Math.min(4, row + 2); newCol = col; break;
+                    }
+                    break;
+                case 'H2':
+                    switch (direction) {
+                        case 'FL': newRow = gameState.turn === 'A' ? Math.min(4, row + 2) : Math.max(0, row - 2); newCol = Math.max(0, col - 2); break;
+                        case 'FR': newRow = gameState.turn === 'A' ? Math.min(4, row + 2) : Math.max(0, row - 2); newCol = Math.min(4, col + 2); break;
+                        case 'BL': newRow = gameState.turn === 'A' ? Math.max(0, row - 2) : Math.min(4, row + 2); newCol = Math.max(0, col - 2); break;
+                        case 'BR': newRow = gameState.turn === 'A' ? Math.max(0, row - 2) : Math.min(4, row + 2); newCol = Math.min(4, col + 2); break;
+                    }
+                    break;
+            }
+    
+            if (gameState.grid[newRow][newCol] && gameState.grid[newRow][newCol].startsWith(player)) {
+                ws.send(JSON.stringify({
+                    type: 'error',
+                    message: `Cannot move to cell occupied by your own piece! Cell value: ${gameState.grid[newRow][newCol]}`
+                }));
+                console.log(`Error: Cannot move to cell occupied by your own piece! Cell value: ${gameState.grid[newRow][newCol]}`);
+                return;
+            }
+    
+            if (character === 'H1' || character === 'H2') {
+                removeOpponentCharactersInPath(row, col, newRow, newCol);
+            }
+    
+            gameState.grid[row][col] = null;
+            gameState.grid[newRow][newCol] = `${player}-${character}`;
+    
+            console.log('Updated game state:', gameState);
+    
+            checkForWinner();
+            if (gameState.winner) {
+                broadcastGameState();
+                console.log('Game over. Winner:', gameState.winner);
+                return;
+            }
+    
+            gameState.turn = gameState.turn === 'A' ? 'B' : 'A';
+            broadcastGameState();
+        }
+    });
 
+    ws.on('close', () => {
+        console.log('Client disconnected');
+    });
+});
+
+const findCharacterPosition = (character) => {
+    for (let i = 0; i < 5; i++) {
+        for (let j = 0; j < 5; j++) {
+            if (gameState.grid[i][j] === character) {
+                return [i, j];
+            }
+        }
+    }
+    return [null, null];
+};
+const removeOpponentCharactersInPath = (row1, col1, row2, col2, character) => {
+    if (character !== 'H1' && character !== 'H2') {
+        return;
+    }
+
+    const directionRow = Math.sign(row2 - row1);
+    const directionCol = Math.sign(col2 - col1);
+
+    let currentRow = row1 + directionRow;
+    let currentCol = col1 + directionCol;
+
+    while (currentRow !== row2 || currentCol !== col2) {
+        if (currentRow >= 0 && currentRow < 5 && currentCol >= 0 && currentCol < 5) {
+            if (gameState.grid[currentRow][currentCol] && !gameState.grid[currentRow][currentCol].startsWith(character.charAt(0))) {
+                gameState.grid[currentRow][currentCol] = null;
+            }
+        }
+        currentRow += directionRow;
+        currentCol += directionCol;
+    }
+};
 server.listen(8080, () => {
-  console.log("Server is listening on port 8080");
+    console.log('Server is listening on port 8080');
 });
