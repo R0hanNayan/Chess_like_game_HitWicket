@@ -11,8 +11,6 @@ const App = () => {
 
     useEffect(() => {
         const ws = new WebSocket('wss://chess-like-game-hitwicket.onrender.com');
-);
-        
         ws.onmessage = (event) => {
             const message = JSON.parse(event.data);
             if (message.type === 'state') {
@@ -32,7 +30,7 @@ const App = () => {
             const command = playerMove.trim();
             const player = gameState.turn;
             const [character, direction] = command.split(':');
-            const ws = new WebSocket('ws://localhost:8080');
+            const ws = new WebSocket('wss://chess-like-game-hitwicket.onrender.com');
             ws.onopen = () => {
                 ws.send(JSON.stringify({ type: 'move', player, character, direction }));
             };
