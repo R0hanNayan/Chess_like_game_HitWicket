@@ -1,5 +1,7 @@
 # CLASH OF GRIDS
 
+#### Access the deployed site at: https://chess-like-game-hitwicket-1.onrender.com/
+
 ## Prerequisites
 Node.js: Ensure you have Node.js installed on your machine.
 
