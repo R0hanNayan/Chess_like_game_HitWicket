@@ -1,51 +1,52 @@
-﻿# Chess_like_game
+# CLASH OF GRIDS
 
- Installation
-To set up the project on your local machine, follow these steps:
+## Prerequisites
+Node.js: Ensure you have Node.js installed on your machine.
 
-Clone the Repository:
+npm: Node Package Manager (comes with Node.js).
 
+## Installation
+
+Clone the repository:
+
+```bash
 git clone https://github.com/R0hanNayan/ROHAN_NAYAN_21BCI0040.git
+```
 
-Navigate to the Project Directory:
+## Navigate to the project directory:
 
+```bash
 cd ROHAN_NAYAN_21BCI0040
 
-Install Dependencies:
-
-Make sure you have Node.js installed. Then, install the project dependencies using:
+cd client
 
 npm install
 
-Usage
+cd ../server
 
-To run the project, follow these instructions:
+npm install
+```
 
-Start the Application:
+## Running the Application
 
-Use the following command to start the application:
+```bash
+Start the server:
+
+cd server
+
+node server.js
+
+
+Start the client:
+
+cd ../client
 
 npm start
+```
+Access the game: Open your web browser and navigate to http://localhost:3000 to start playing the game.
 
-Access the Application:
+```bash
+Configuration
+WebSocket URL: Update the WebSocket URL in src/App.js if your server URL changes:
 
-Open your web browser and navigate to:
-
-http://localhost:3000
-
-This will load the application’s main interface where you can interact with the project.
-
-Additional Commands:
-
-To run tests, use:
-
-npm test
-
-For a production build, use:
-
-npm run build
-
-To check for any linting issues, use:
-
-npm run lint
-
+const ws = new WebSocket('wss://chess-like-game-hitwicket.onrender.com');
