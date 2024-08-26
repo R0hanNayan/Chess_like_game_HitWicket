@@ -127,3 +127,29 @@ button:disabled {
   font-size: 1.2em;
   color: #e0e0e0;
 }
+
+.move-history {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+}
+
+.move-history h2 {
+  color: #e0e0e0;
+  margin-bottom: 10px;
+}
+
+.move-history ul {
+  list-style: none;
+  padding: 0;
+}
+
+.move-history li {
+  background-color: #333;
+  margin: 5px 0;
+  padding: 10px;
+  border-radius: 4px;
+}

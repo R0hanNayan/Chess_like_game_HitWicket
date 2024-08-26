@@ -84,6 +84,8 @@ wss.on('connection', (ws) => {
             let newRow = row;
             let newCol = col;
 
+            console.log(`Moving character ${character} from (${row}, ${col}) to (${newRow}, ${newCol})`);
+
             switch (character) {
                 case 'P1':
                 case 'P2':
@@ -113,6 +115,8 @@ wss.on('connection', (ws) => {
                     break;
             }
 
+            console.log(`Move completed. New position: (${newRow}, ${newCol})`);
+
             if (gameState.grid[newRow][newCol] && gameState.grid[newRow][newCol].startsWith(player)) {
                 ws.send(JSON.stringify({
                     type: 'error',
@@ -128,6 +132,8 @@ wss.on('connection', (ws) => {
 
             gameState.grid[row][col] = null;
             gameState.grid[newRow][newCol] = `${player}-${character}`;
+
+            gameState.moves.push(`${player}-${character} moved ${direction}`);
 
             console.log('Updated game state:', gameState);
 
