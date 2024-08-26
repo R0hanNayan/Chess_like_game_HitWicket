@@ -1,5 +1,4 @@
 # HITWICKET SOFTWARE ENGINEER ASSIGNMENT
-
 # CLASH OF GRIDS
 
 #### Access the deployed site at: https://chess-like-game-hitwicket-1.onrender.com/
@@ -52,7 +51,6 @@ npm start
 Access the game: Open your web browser and navigate to http://localhost:3000 to start playing the game.
 
 ## Configuration
-
 ```bash
 WebSocket URL: Update the WebSocket URL in src/App.js if your server URL changes:
 
@@ -64,7 +62,6 @@ wsRef.current = new WebSocket('ws://localhost:8080');
 ## Game Rules
 
 ### Game Setup
-
 ```bash
 The game is played between two players on a 5x5 grid.
 
@@ -76,7 +73,6 @@ Characters and Movement
 
 There are three types of characters available:
 ```
-
 ```
 Pawn:
 
@@ -84,7 +80,6 @@ Moves one block in any direction (Left, Right, Forward, or Backward).
 
 Move commands: L (Left), R (Right), F (Forward), B (Backward)
 ```
-
 ```
 Hero1:
 
@@ -94,7 +89,6 @@ Kills any opponent's character in its path.
 
 Move commands: L (Left), R (Right), F (Forward), B (Backward)
 ```
-
 ```
 Hero2:
 
