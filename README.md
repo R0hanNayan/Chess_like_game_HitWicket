@@ -50,11 +50,13 @@ npm start
 
 Access the game: Open your web browser and navigate to http://localhost:3000 to start playing the game.
 
+## Configuration
 ```bash
-Configuration
 WebSocket URL: Update the WebSocket URL in src/App.js if your server URL changes:
 
 const ws = new WebSocket('wss://chess-like-game-hitwicket.onrender.com');
+
+const ws = new WebSocket('ws://localhost:8080');
 ```
 
 ## Game Rules
