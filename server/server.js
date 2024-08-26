@@ -1,7 +1,7 @@
 const WebSocket = require('ws');
 const http = require('http');
 const express = require('express');
-const path = require('path'); 
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
@@ -13,19 +13,22 @@ app.get('/', (req, res) => {
     res.sendFile(path.join('Client', 'index.html'));
 });
 
-let gameState = {
-    grid: [
-        ['A-P1', 'A-P2', 'A-H1', 'A-H2', 'A-P3'],
-        [null, null, null, null, null],
-        [null, null, null, null, null],
-        [null, null, null, null, null],
-        ['B-P1', 'B-P2', 'B-H1', 'B-H2', 'B-P3']
-    ],
-    turn: 'A',
-    winner: null,
-    moves: []
-};
+let gameState = getInitialGameState();
 
+function getInitialGameState() {
+    return {
+        grid: [
+            ['A-P1', 'A-P2', 'A-H1', 'A-H2', 'A-P3'],
+            [null, null, null, null, null],
+            [null, null, null, null, null],
+            [null, null, null, null, null],
+            ['B-P1', 'B-P2', 'B-H1', 'B-H2', 'B-P3']
+        ],
+        turn: 'A',
+        winner: null,
+        moves: []
+    };
+}
 
 const broadcastGameState = () => {
     const stateMessage = JSON.stringify({ type: 'state', state: gameState });
@@ -34,7 +37,7 @@ const broadcastGameState = () => {
             client.send(stateMessage);
         }
     });
-    console.log('Broadcasted game state:', gameState); 
+    console.log('Broadcasted game state:', gameState);
 };
 
 const checkForWinner = () => {
@@ -48,6 +51,12 @@ const checkForWinner = () => {
     }
 };
 
+const resetGame = () => {
+    gameState = getInitialGameState();
+    broadcastGameState();
+    console.log('Game state reset:', gameState);
+};
+
 wss.on('connection', (ws) => {
     console.log('Client connected');
     ws.send(JSON.stringify({ type: 'state', state: gameState }));
@@ -55,27 +64,26 @@ wss.on('connection', (ws) => {
     ws.on('message', (message) => {
         console.log('Received message:', message);
         const data = JSON.parse(message);
-    
+
         if (data.type === 'move') {
             const { player, character, direction } = data;
-    
+
             if (gameState.turn !== player) {
                 ws.send(JSON.stringify({ type: 'error', message: 'Not your turn!' }));
                 console.log('Error: Not your turn!');
                 return;
             }
-    
+
             const [row, col] = findCharacterPosition(`${player}-${character}`);
             if (row === null || col === null) {
                 ws.send(JSON.stringify({ type: 'error', message: 'Character not found!' }));
                 console.log('Error: Character not found!');
                 return;
             }
-    
 
             let newRow = row;
             let newCol = col;
-    
+
             switch (character) {
                 case 'P1':
                 case 'P2':
@@ -104,7 +112,7 @@ wss.on('connection', (ws) => {
                     }
                     break;
             }
-    
+
             if (gameState.grid[newRow][newCol] && gameState.grid[newRow][newCol].startsWith(player)) {
                 ws.send(JSON.stringify({
                     type: 'error',
@@ -113,25 +121,27 @@ wss.on('connection', (ws) => {
                 console.log(`Error: Cannot move to cell occupied by your own piece! Cell value: ${gameState.grid[newRow][newCol]}`);
                 return;
             }
-    
+
             if (character === 'H1' || character === 'H2') {
-                removeOpponentCharactersInPath(row, col, newRow, newCol);
+                removeOpponentCharactersInPath(row, col, newRow, newCol, character);
             }
-    
+
             gameState.grid[row][col] = null;
             gameState.grid[newRow][newCol] = `${player}-${character}`;
-    
+
             console.log('Updated game state:', gameState);
-    
+
             checkForWinner();
             if (gameState.winner) {
                 broadcastGameState();
                 console.log('Game over. Winner:', gameState.winner);
                 return;
             }
-    
+
             gameState.turn = gameState.turn === 'A' ? 'B' : 'A';
             broadcastGameState();
+        } else if (data.type === 'reset') {
+            resetGame();
         }
     });
 
@@ -150,6 +160,7 @@ const findCharacterPosition = (character) => {
     }
     return [null, null];
 };
+
 const removeOpponentCharactersInPath = (row1, col1, row2, col2, character) => {
     if (character !== 'H1' && character !== 'H2') {
         return;
@@ -171,6 +182,7 @@ const removeOpponentCharactersInPath = (row1, col1, row2, col2, character) => {
         currentCol += directionCol;
     }
 };
+
 server.listen(8080, () => {
     console.log('Server is listening on port 8080');
 });
