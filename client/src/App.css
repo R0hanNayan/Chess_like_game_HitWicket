@@ -29,6 +29,7 @@ td {
   vertical-align: middle;
   font-size: 1.2em;
   box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+  cursor: pointer;
 }
 
 .cell {
@@ -38,6 +39,10 @@ td {
 
 .cell:hover {
   background-color: #333333; 
+}
+
+.selected {
+  background-color: #4caf50 !important;
 }
 
 button {
@@ -87,59 +92,22 @@ button:disabled {
   margin: 20px 0;
 }
 
-.moves-section {
-  margin-top: 20px;
+.controls {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.moves-section h3 {
-  color: #e0e0e0;
-  margin-bottom: 10px;
-}
-
-.moves-section .button-group {
-  display: flex;
-  flex-wrap: wrap; 
-  gap: 10px; 
-}
-
-.moves-section button {
-  width: 150px; 
-  margin: 8px; 
-}
-
-#game-board {
-  display: grid;
-  grid-template-columns: repeat(5, 60px);
-  grid-template-rows: repeat(5, 60px);
-  gap: 4px;
-  margin-bottom: 20px;
-}
-
-.grid-cell {
-  background-color: #1e1e1e;
-  border: 1px solid #333;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  font-size: 1.2em;
-  color: #e0e0e0;
+  margin-top: 20px;
+}
+
+.controls button {
+  width: 100px;
 }
 
 .move-history {
   margin-top: 20px;
-  padding: 10px;
-  background-color: #1e1e1e;
-  border: 1px solid #333;
-  border-radius: 8px;
-  box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
-}
-
-.move-history h2 {
-  color: #e0e0e0;
-  margin-bottom: 10px;
+  text-align: left;
+  margin-left: auto;
+  margin-right: auto;
+  width: 300px;
 }
 
 .move-history ul {
@@ -148,8 +116,25 @@ button:disabled {
 }
 
 .move-history li {
-  background-color: #333;
-  margin: 5px 0;
-  padding: 10px;
+  background-color: #2c2c2c;
+  padding: 8px;
+  margin-bottom: 4px;
   border-radius: 4px;
+}
+
+.selected {
+  background-color: #4caf50 !important;
+  color: #fff;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.controls button {
+  width: 120px;
+  margin: 5px;
 }

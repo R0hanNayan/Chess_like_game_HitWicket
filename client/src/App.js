@@ -10,6 +10,8 @@ const App = () => {
     });
 
     const wsRef = useRef(null);
+    const [selectedCharacter, setSelectedCharacter] = useState(null);
+    const [validMoves, setValidMoves] = useState([]);
 
     useEffect(() => {
         wsRef.current = new WebSocket('wss://chess-like-game-hitwicket.onrender.com');
@@ -30,8 +32,9 @@ const App = () => {
         };
     }, []);
 
-    const handleMove = (player, character, direction) => {
-        if (gameState.winner) return;
+    const handleMove = (direction) => {
+        if (gameState.winner || !selectedCharacter) return;
+        const [player, character] = selectedCharacter.split('-');
         const move = {
             type: 'move',
             player,
@@ -41,12 +44,43 @@ const App = () => {
         if (wsRef.current) {
             wsRef.current.send(JSON.stringify(move));
         }
+        setSelectedCharacter(null);
+        setValidMoves([]);
+    };
+
+    const handleCellClick = (rowIndex, colIndex) => {
+        const cellValue = gameState.grid[rowIndex][colIndex];
+        if (cellValue && cellValue.startsWith(gameState.turn)) {
+            setSelectedCharacter(cellValue);
+            const characterType = cellValue.split('-')[1];
+            determineValidMoves(characterType);
+        }
+    };
+
+    const determineValidMoves = (characterType) => {
+        switch (characterType) {
+            case 'P1':
+            case 'P2':
+            case 'P3':
+                setValidMoves(['F', 'B', 'L', 'R']);
+                break;
+            case 'H1':
+                setValidMoves(['F', 'B', 'L', 'R']);
+                break;
+            case 'H2':
+                setValidMoves(['FL', 'FR', 'BL', 'BR']);
+                break;
+            default:
+                setValidMoves([]);
+        }
     };
 
     const handleReset = () => {
         if (wsRef.current) {
             wsRef.current.send(JSON.stringify({ type: 'reset' }));
         }
+        setSelectedCharacter(null);
+        setValidMoves([]);
     };
 
     return (
@@ -62,7 +96,11 @@ const App = () => {
                     {gameState.grid.map((row, rowIndex) => (
                         <tr key={rowIndex}>
                             {row.map((cell, colIndex) => (
-                                <td key={colIndex} className="cell">
+                                <td
+                                    key={colIndex}
+                                    className={`cell ${cell === selectedCharacter ? 'selected' : ''}`}
+                                    onClick={() => handleCellClick(rowIndex, colIndex)}
+                                >
                                     {cell}
                                 </td>
                             ))}
@@ -70,61 +108,18 @@ const App = () => {
                     ))}
                 </tbody>
             </table>
-            <div className="moves-section">
-                {gameState.turn === 'A' && (
-                    <div className="player-controls">
-                    <h3>Player A Moves</h3>
-                    <button onClick={() => handleMove('A', 'P1', 'L')}>A-P1 L</button>
-                    <button onClick={() => handleMove('A', 'P1', 'R')}>A-P1 R</button>
-                    <button onClick={() => handleMove('A', 'P1', 'F')}>A-P1 F</button>
-                    <button onClick={() => handleMove('A', 'P1', 'B')}>A-P1 B</button>
-                    <button onClick={() => handleMove('A', 'P2', 'L')}>A-P2 L</button>
-                    <button onClick={() => handleMove('A', 'P2', 'R')}>A-P2 R</button>
-                    <button onClick={() => handleMove('A', 'P2', 'F')}>A-P2 F</button>
-                    <button onClick={() => handleMove('A', 'P2', 'B')}>A-P2 B</button>
-                    <button onClick={() => handleMove('A', 'P3', 'L')}>A-P3 L</button>
-                    <button onClick={() => handleMove('A', 'P3', 'R')}>A-P3 R</button>
-                    <button onClick={() => handleMove('A', 'P3', 'F')}>A-P3 F</button>
-                    <button onClick={() => handleMove('A', 'P3', 'B')}>A-P3 B</button>
-                    <button onClick={() => handleMove('A', 'H1', 'L')}>A-H1 L</button>
-                    <button onClick={() => handleMove('A', 'H1', 'R')}>A-H1 R</button>
-                    <button onClick={() => handleMove('A', 'H1', 'F')}>A-H1 F</button>
-                    <button onClick={() => handleMove('A', 'H1', 'B')}>A-H1 B</button>
-                    <button onClick={() => handleMove('A', 'H2', 'FL')}>A-H2 FL</button>
-                    <button onClick={() => handleMove('A', 'H2', 'FR')}>A-H2 FR</button>
-                    <button onClick={() => handleMove('A', 'H2', 'BL')}>A-H2 BL</button>
-                    <button onClick={() => handleMove('A', 'H2', 'BR')}>A-H2 BR</button>
-                </div>
-            )}
-            {gameState.turn === 'B' && (
-                <div className="player-controls">
-                    <h3>Player B Moves</h3>
-                    <button onClick={() => handleMove('B', 'P1', 'L')}>B-P1 L</button>
-                    <button onClick={() => handleMove('B', 'P1', 'R')}>B-P1 R</button>
-                    <button onClick={() => handleMove('B', 'P1', 'F')}>B-P1 F</button>
-                    <button onClick={() => handleMove('B', 'P1', 'B')}>B-P1 B</button>
-                    <button onClick={() => handleMove('B', 'P2', 'L')}>B-P2 L</button>
-                    <button onClick={() => handleMove('B', 'P2', 'R')}>B-P2 R</button>
-                    <button onClick={() => handleMove('B', 'P2', 'F')}>B-P2 F</button>
-                    <button onClick={() => handleMove('B', 'P2', 'B')}>B-P2 B</button>
-                    <button onClick={() => handleMove('B', 'P3', 'L')}>B-P3 L</button>
-                    <button onClick={() => handleMove('B', 'P3', 'R')}>B-P3 R</button>
-                    <button onClick={() => handleMove('B', 'P3', 'F')}>B-P3 F</button>
-                    <button onClick={() => handleMove('B', 'P3', 'B')}>B-P3 B</button>
-                    <button onClick={() => handleMove('B', 'H1', 'L')}>B-H1 L</button>
-                    <button onClick={() => handleMove('B', 'H1', 'R')}>B-H1 R</button>
-                    <button onClick={() => handleMove('B', 'H1', 'F')}>B-H1 F</button>
-                    <button onClick={() => handleMove('B', 'H1', 'B')}>B-H1 B</button>
-                    <button onClick={() => handleMove('B', 'H2', 'FL')}>B-H2 FL</button>
-                    <button onClick={() => handleMove('B', 'H2', 'FR')}>B-H2 FR</button>
-                    <button onClick={() => handleMove('B', 'H2', 'BL')}>B-H2 BL</button>
-                    <button onClick={() => handleMove('B', 'H2', 'BR')}>B-H2 BR</button>
-                </div>
-                )}
+            <div className="controls">
+                {validMoves.includes('F') && <button onClick={() => handleMove('F')}>Forward</button>}
+                {validMoves.includes('B') && <button onClick={() => handleMove('B')}>Backward</button>}
+                {validMoves.includes('L') && <button onClick={() => handleMove('L')}>Left</button>}
+                {validMoves.includes('R') && <button onClick={() => handleMove('R')}>Right</button>}
+                {validMoves.includes('FL') && <button onClick={() => handleMove('FL')}>Forward Left</button>}
+                {validMoves.includes('FR') && <button onClick={() => handleMove('FR')}>Forward Right</button>}
+                {validMoves.includes('BL') && <button onClick={() => handleMove('BL')}>Backward Left</button>}
+                {validMoves.includes('BR') && <button onClick={() => handleMove('BR')}>Backward Right</button>}
             </div>
             <button className="reset-button" onClick={handleReset}>Reset Game</button>
 
-            {/* Move History Box */}
             <div className="move-history">
                 <h2>Move History</h2>
                 <ul>
